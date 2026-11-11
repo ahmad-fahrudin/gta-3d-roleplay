@@ -62,6 +62,51 @@ export const MiniMap: React.FC<MiniMapProps> = ({ gameState }) => {
         ctx.arc((30 - px) * scale, (30 - pz) * scale, 18 * scale, 0, Math.PI * 2);
         ctx.fill();
 
+        // Draw Roleplay POI Blips (ATM, Shop, Job, Hospital)
+        const pois = [
+            { x: 10, z: 10, color: '#f1c40f', label: '$' }, // ATM
+            { x: -15, z: 15, color: '#2ecc71', label: 'S' }, // Shop
+            { x: 15, z: -15, color: '#9b59b6', label: 'J' }, // Job Center
+            { x: -25, z: -25, color: '#e74c3c', label: '+' }, // Hospital
+        ];
+
+        for (const poi of pois) {
+            const bx = (poi.x - px) * scale;
+            const bz = (poi.z - pz) * scale;
+            ctx.save();
+            ctx.translate(bx, bz);
+            ctx.fillStyle = poi.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(poi.label, 0, 0);
+            ctx.restore();
+        }
+
+        // Draw Active Mission Waypoint Blip
+        if (gameState.activeMission) {
+            const mx = (gameState.activeMission.target.x - px) * scale;
+            const mz = (gameState.activeMission.target.z - pz) * scale;
+            ctx.save();
+            ctx.translate(mx, mz);
+            ctx.fillStyle = '#00ffff';
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.restore();
+        }
+
         // Draw other vehicles as blips
         for (const v of gameState.vehiclesCoords) {
             if (gameState.inVehicle && Math.abs(v.x - px) < 1 && Math.abs(v.z - pz) < 1) continue;

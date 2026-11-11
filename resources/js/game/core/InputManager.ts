@@ -67,7 +67,7 @@ export class InputManager {
         this.state.jump = false;
     }
 
-    onAction(action: 'interact' | 'horn' | 'lights' | 'cameraToggle', cb: () => void): () => void {
+    onAction(action: 'interact' | 'horn' | 'lights' | 'cameraToggle' | 'useMarker' | 'togglePhone' | 'toggleInventory', cb: () => void): () => void {
         if (!this.onKeyActionCallbacks.has(action)) {
             this.onKeyActionCallbacks.set(action, []);
         }
@@ -113,10 +113,26 @@ export class InputManager {
                 this.state.jump = true;
                 break;
             case 'KeyF':
-            case 'KeyE':
                 if (!e.repeat) {
                     this.state.interact = true;
                     this.triggerAction('interact');
+                }
+                break;
+            case 'KeyE':
+                if (!e.repeat) {
+                    this.triggerAction('useMarker');
+                }
+                break;
+            case 'KeyM':
+                if (!e.repeat) {
+                    this.triggerAction('togglePhone');
+                }
+                break;
+            case 'Tab':
+            case 'KeyI':
+                e.preventDefault();
+                if (!e.repeat) {
+                    this.triggerAction('toggleInventory');
                 }
                 break;
             case 'KeyH':

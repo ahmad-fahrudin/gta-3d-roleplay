@@ -1,10 +1,21 @@
 import * as THREE from 'three';
 import { CollisionSystem } from './CollisionSystem';
 
+export interface RoleplayMarker {
+    id: string;
+    type: 'atm' | 'shop' | 'job_center' | 'hospital';
+    title: string;
+    prompt: string;
+    position: THREE.Vector3;
+    mesh: THREE.Group;
+}
+
 export class CityBuilder {
     private scene: THREE.Scene;
     private collisionSystem: CollisionSystem;
     public cityBounds = { minX: -180, maxX: 180, minZ: -180, maxZ: 180 };
+    public roleplayMarkers: RoleplayMarker[] = [];
+    public missionMarkerMesh: THREE.Group | null = null;
 
     constructor(scene: THREE.Scene, collisionSystem: CollisionSystem) {
         this.scene = scene;
@@ -15,6 +26,7 @@ export class CityBuilder {
         this.createGroundAndRoads();
         this.createBuildings();
         this.createProps();
+        this.createRoleplayMarkers();
     }
 
     private createGroundAndRoads() {
@@ -349,6 +361,162 @@ export class CityBuilder {
 
         // Collider for trunk
         this.collisionSystem.addBoxCollider('tree', new THREE.Vector3(x, 2.25, z), new THREE.Vector3(0.8, 4.5, 0.8));
+    }
+
+    private createRoleplayMarkers() {
+        const markerDefs: Array<{
+            id: string;
+            type: 'atm' | 'shop' | 'job_center' | 'hospital';
+            title: string;
+            prompt: string;
+            pos: [number, number, number];
+            color: number;
+        }> = [
+            {
+                id: 'atm_1',
+                type: 'atm',
+                title: 'Maze Bank ATM',
+                prompt: 'Tekan [E] untuk Membuka ATM',
+                pos: [10, 0, 10],
+                color: 0xf1c40f, // Golden yellow
+            },
+            {
+                id: 'shop_1',
+                type: 'shop',
+                title: '24/7 Supermarket',
+                prompt: 'Tekan [E] untuk Belanja Makanan & Alat',
+                pos: [-15, 0, 15],
+                color: 0x2ecc71, // Green
+            },
+            {
+                id: 'job_1',
+                type: 'job_center',
+                title: 'Balai Kota / Job Center',
+                prompt: 'Tekan [E] untuk Mengambil Pekerjaan',
+                pos: [15, 0, -15],
+                color: 0x9b59b6, // Purple
+            },
+            {
+                id: 'hosp_1',
+                type: 'hospital',
+                title: 'Pillbox Hill Medical',
+                prompt: 'Tekan [E] untuk Pengobatan Medis ($250)',
+                pos: [-25, 0, -25],
+                color: 0xe74c3c, // Red
+            },
+        ];
+
+        for (const def of markerDefs) {
+            const group = new THREE.Group();
+            group.position.set(def.pos[0], 0.05, def.pos[2]);
+
+            // Ground glowing disc
+            const ringGeo = new THREE.RingGeometry(1.2, 1.6, 24);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: def.color,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8,
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            group.add(ring);
+
+            // Floating 3D Diamond / Crystal
+            const crystalGeo = new THREE.OctahedronGeometry(0.55);
+            const crystalMat = new THREE.MeshStandardMaterial({
+                color: def.color,
+                emissive: def.color,
+                emissiveIntensity: 0.5,
+                roughness: 0.2,
+                metalness: 0.8,
+            });
+            const crystal = new THREE.Mesh(crystalGeo, crystalMat);
+            crystal.position.y = 1.6;
+            group.add(crystal);
+
+            // Vertical light pillar cylinder
+            const cylinderGeo = new THREE.CylinderGeometry(1.2, 1.2, 2.5, 16, 1, true);
+            const cylinderMat = new THREE.MeshBasicMaterial({
+                color: def.color,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.DoubleSide,
+            });
+            const pillar = new THREE.Mesh(cylinderGeo, cylinderMat);
+            pillar.position.y = 1.25;
+            group.add(pillar);
+
+            this.scene.add(group);
+
+            this.roleplayMarkers.push({
+                id: def.id,
+                type: def.type,
+                title: def.title,
+                prompt: def.prompt,
+                position: new THREE.Vector3(def.pos[0], def.pos[1], def.pos[2]),
+                mesh: group,
+            });
+        }
+    }
+
+    setMissionMarker(target: { x: number; z: number } | null) {
+        if (!target) {
+            if (this.missionMarkerMesh) {
+                this.scene.remove(this.missionMarkerMesh);
+                this.missionMarkerMesh = null;
+            }
+            return;
+        }
+
+        if (!this.missionMarkerMesh) {
+            this.missionMarkerMesh = new THREE.Group();
+
+            const ringGeo = new THREE.RingGeometry(1.8, 2.4, 24);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.85,
+            });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            this.missionMarkerMesh.add(ring);
+
+            const beaconGeo = new THREE.CylinderGeometry(0.8, 0.8, 8, 16, 1, true);
+            const beaconMat = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.35,
+                side: THREE.DoubleSide,
+            });
+            const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+            beacon.position.y = 4;
+            this.missionMarkerMesh.add(beacon);
+
+            this.scene.add(this.missionMarkerMesh);
+        }
+
+        this.missionMarkerMesh.position.set(target.x, 0.05, target.z);
+    }
+
+    updateMarkers(time: number) {
+        // Gently rotate and bob marker crystals
+        for (const marker of this.roleplayMarkers) {
+            const crystal = marker.mesh.children[1];
+            if (crystal) {
+                crystal.rotation.y = time * 1.5;
+                crystal.position.y = 1.6 + Math.sin(time * 3) * 0.15;
+            }
+        }
+
+        if (this.missionMarkerMesh) {
+            this.missionMarkerMesh.rotation.y = time;
+            const beacon = this.missionMarkerMesh.children[1];
+            if (beacon) {
+                beacon.scale.y = 1 + Math.sin(time * 4) * 0.1;
+            }
+        }
     }
 }
 
