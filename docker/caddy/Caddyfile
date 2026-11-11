@@ -1,0 +1,20 @@
+{
+	skip_install_trust
+	auto_https off
+	admin off
+
+	frankenphp {
+		worker {
+			file /app/public/frankenphp-worker.php
+			num 2
+			watch
+		}
+	}
+}
+
+:80 {
+	root * /app/public
+	encode zstd gzip
+
+	php_server
+}

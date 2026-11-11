@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gta_app
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SERVER_NAME: ":80"
+      CADDY_GLOBAL_OPTIONS: "auto_https off"
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: gta_rp
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+    volumes:
+      - ./:/app
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gta_network
+
+  frontend:
+    image: node:22-bookworm-slim
+    container_name: gta_frontend
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./:/app
+    command: sh -c "if [ ! -d node_modules ] || [ ! -f node_modules/.package-lock.json ]; then npm install; fi && npm run dev"
+    networks:
+      - gta_network
+
+  db:
+    image: mysql:8.0
+    container_name: gta_db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gta_rp
+      MYSQL_USER: laravel
+      MYSQL_PASSWORD: secret
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - gta_network
+
+volumes:
+  db_data:
+
+networks:
+  gta_network:
+    driver: bridge
