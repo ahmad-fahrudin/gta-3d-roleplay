@@ -48,6 +48,8 @@ services:
       NODE_ENV: development
     volumes:
       - ./:/app
+    healthcheck:
+      disable: true
     entrypoint: []
     command: npm run dev
     depends_on:
