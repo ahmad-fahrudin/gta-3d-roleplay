@@ -38,7 +38,8 @@ export interface GameState {
     inventory: InventoryItem[];
     phoneOpen: boolean;
     inventoryOpen: boolean;
-    activeModal: 'atm' | 'shop' | 'job_center' | null;
+    activeModal: 'atm' | 'shop' | 'job_center' | 'customs' | null;
+    timeOfDay: { hour: number; minute: number; isNight: boolean };
 }
 
 export interface ChatMessage {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GameEngine } from '../game/core/GameEngine';
 import { HUD } from '../components/game/HUD';
-import { home } from '../routes';
+import { dashboard } from '../routes';
 import { ArrowLeft, Maximize2 } from 'lucide-react';
 
 export default function GamePage() {
@@ -39,11 +39,11 @@ export default function GamePage() {
             {/* Top Header Floating Controls */}
             <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 backdrop-blur-md text-xs text-white shadow-xl">
                 <Link
-                    href={home()}
+                    href={dashboard()}
                     className="flex items-center gap-1 rounded-full px-2.5 py-1 text-neutral-300 hover:text-white hover:bg-white/10 transition-colors"
                 >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    <span>Keluar</span>
+                    <span>Kembali ke Dashboard</span>
                 </Link>
                 <div className="h-3 w-px bg-white/20" />
                 <span className="font-semibold text-amber-400">GTA 3D Roleplay</span>
